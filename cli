@@ -5,12 +5,23 @@ echo "Cập nhật và nâng cấp hệ thống..."
 sudo apt update && sudo apt upgrade -y
 
 # Cài đặt các gói cần thiết
-echo "Cài đặt build-essential, pkg-config, libssl-dev, git-all, protobuf-compiler..."
-sudo apt install -y build-essential pkg-config libssl-dev git-all protobuf-compiler
+echo "Cài đặt build-essential, pkg-config, libssl-dev, git-all, autoconf, automake, libtool..."
+sudo apt install -y build-essential pkg-config libssl-dev git-all autoconf automake libtool curl make g++ unzip
 
-# Kiểm tra cài đặt Protobuf
-echo "Kiểm tra protoc..."
-protoc --version || { echo "Cài đặt protoc thất bại!"; exit 1; }
+# Cài đặt Protobuf từ source
+echo "Cài đặt Protobuf từ source..."
+sudo apt remove -y protobuf-compiler
+git clone --depth=1 --branch=v21.12 https://github.com/protocolbuffers/protobuf.git
+cd protobuf
+git submodule update --init --recursive
+./autogen.sh
+./configure
+make -j$(nproc)
+sudo make install
+sudo ldconfig
+cd ..
+rm -rf protobuf
+protoc --version
 
 # Cài đặt Rust
 echo "Cài đặt Rust..."
