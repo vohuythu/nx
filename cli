@@ -1,12 +1,28 @@
 #!/bin/bash
 
-# Cập nhật và nâng cấp hệ thống
-echo "Cập nhật và nâng cấp hệ thống..."
-sudo apt update && sudo apt upgrade -y
+
 
 # Cài đặt các gói cần thiết
 echo "Cài đặt build-essential, pkg-config, libssl-dev, git-all, autoconf, automake, libtool..."
 sudo apt install -y build-essential pkg-config libssl-dev git-all autoconf automake libtool curl make g++ unzip
+
+sudo apt remove -y protobuf-compiler
+sudo apt install -y autoconf automake libtool curl make g++ unzip
+
+# Clone repo Protobuf
+git clone --depth=1 --branch=v21.12 https://github.com/protocolbuffers/protobuf.git
+cd protobuf
+
+# Biên dịch và cài đặt Protobuf
+git submodule update --init --recursive
+./autogen.sh
+./configure
+make -j$(nproc)
+sudo make install
+sudo ldconfig
+
+# Kiểm tra lại phiên bản
+protoc --version
 
 # Cài đặt Protobuf từ source
 echo "Cài đặt Protobuf từ source..."
@@ -32,11 +48,12 @@ source $HOME/.cargo/env
 echo "Thêm target riscv32i-unknown-none-elf cho Rust..."
 rustup target add riscv32i-unknown-none-elf
 
+echo '#!/bin/bash' > ~/start_nexus.sh
+echo '~/.nexus/network-api/clients/cli/target/release/nexus-network' >> ~/start_nexus.sh
+chmod +x ~/start_nexus.sh
+
 # Cài đặt Nexus CLI
 echo "Cài đặt Nexus CLI..."
 curl https://cli.nexus.xyz/ | sh
 
-# Hướng dẫn người dùng liên kết tài khoản Nexus
-echo "Để liên kết node với tài khoản Nexus của bạn và bắt đầu kiếm NEX Points, hãy truy cập https://app.nexus.xyz/ và làm theo hướng dẫn."
 
-echo "Cài đặt hoàn tất!"
