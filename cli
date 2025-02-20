@@ -1,0 +1,27 @@
+#!/bin/bash
+
+# Cập nhật và nâng cấp hệ thống
+echo "Cập nhật và nâng cấp hệ thống..."
+sudo apt update && sudo apt upgrade -y
+
+# Cài đặt các gói cần thiết
+echo "Cài đặt build-essential, pkg-config, libssl-dev, git-all..."
+sudo apt install -y build-essential pkg-config libssl-dev git-all
+
+# Cài đặt Rust
+echo "Cài đặt Rust..."
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+source $HOME/.cargo/env
+
+# Thêm target riscv32i cho Rust
+echo "Thêm target riscv32i-unknown-none-elf cho Rust..."
+rustup target add riscv32i-unknown-none-elf
+
+# Cài đặt Nexus CLI
+echo "Cài đặt Nexus CLI..."
+curl https://cli.nexus.xyz/ | sh
+
+# Hướng dẫn người dùng liên kết tài khoản Nexus
+echo "Để liên kết node với tài khoản Nexus của bạn và bắt đầu kiếm NEX Points, hãy truy cập https://app.nexus.xyz/ và làm theo hướng dẫn."
+
+echo "Cài đặt hoàn tất!"
