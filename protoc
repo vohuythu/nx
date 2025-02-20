@@ -1,0 +1,17 @@
+sudo apt remove -y protobuf-compiler
+sudo apt install -y autoconf automake libtool curl make g++ unzip
+
+# Clone repo Protobuf
+git clone --depth=1 --branch=v21.12 https://github.com/protocolbuffers/protobuf.git
+cd protobuf
+
+# Biên dịch và cài đặt Protobuf
+git submodule update --init --recursive
+./autogen.sh
+./configure
+make -j$(nproc)
+sudo make install
+sudo ldconfig
+
+# Kiểm tra lại phiên bản
+protoc --version
