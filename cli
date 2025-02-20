@@ -49,7 +49,7 @@ echo "Thêm target riscv32i-unknown-none-elf cho Rust..."
 rustup target add riscv32i-unknown-none-elf
 
 echo '#!/bin/bash' > ~/start_nexus.sh
-echo '~/.nexus/network-api/clients/cli/target/release/nexus-network' >> ~/start_nexus.sh
+echo '~/.nexus/network-api/clients/cli/target/release/nexus-network start' >> ~/start_nexus.sh
 chmod +x ~/start_nexus.sh
 
 # Cài đặt Nexus CLI
