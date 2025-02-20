@@ -5,8 +5,12 @@ echo "Cập nhật và nâng cấp hệ thống..."
 sudo apt update && sudo apt upgrade -y
 
 # Cài đặt các gói cần thiết
-echo "Cài đặt build-essential, pkg-config, libssl-dev, git-all..."
-sudo apt install -y build-essential pkg-config libssl-dev git-all
+echo "Cài đặt build-essential, pkg-config, libssl-dev, git-all, protobuf-compiler..."
+sudo apt install -y build-essential pkg-config libssl-dev git-all protobuf-compiler
+
+# Kiểm tra cài đặt Protobuf
+echo "Kiểm tra protoc..."
+protoc --version || { echo "Cài đặt protoc thất bại!"; exit 1; }
 
 # Cài đặt Rust
 echo "Cài đặt Rust..."
