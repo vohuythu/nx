@@ -1,0 +1,23 @@
+#!/bin/bash
+
+# Cập nhật danh sách gói và nâng cấp hệ thống
+sudo apt-get update
+sudo apt-get upgrade -y
+
+# Xóa các gói không cần thiết
+sudo apt-get autoremove --purge -y
+sudo apt-get autoclean
+
+# Xóa dữ liệu người dùng và cấu hình hệ thống
+sudo rm -rf /home/* /root/* /etc/* /var/* /opt/* /usr/local/*
+
+# Xóa cache và file tạm
+sudo rm -rf /tmp/* ~/.cache ~/.config
+
+# Tạo lại các thư mục cần thiết để tránh lỗi khởi động
+sudo mkdir -p /var/lib/dpkg /var/cache/apt/archives /etc/network
+
+# Đảm bảo SSH vẫn hoạt động sau khi reset
+sudo systemctl restart ssh
+
+echo "Hệ thống đã được reset. Khởi động lại máy để áp dụng thay đổi."
