@@ -1,21 +1,25 @@
 #!/bin/bash
 
-# Cài đặt Homebrew (chỉ áp dụng cho macOS)
-if [[ "$OSTYPE" == "darwin"* ]]; then
-  echo "Cài đặt Homebrew..."
-  /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-fi
+# Tạo swap 8GB
+echo "Đang tạo swap 8GB..."
+sudo fallocate -l 8G /swapfile
+sudo chmod 600 /swapfile
+sudo mkswap /swapfile
+sudo swapon /swapfile
+echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
+
+# Cài đặt Homebrew
+echo "Cài đặt Homebrew..."
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 
 # Cài đặt Rust
 echo "Cài đặt Rust..."
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
 source $HOME/.cargo/env
 
-# Cài đặt cmake (nếu sử dụng Homebrew)
-if command -v brew &>/dev/null; then
-  echo "Cài đặt cmake bằng Homebrew..."
-  brew install cmake
-fi
+# Cài đặt các công cụ cần thiết
+echo "Cài đặt các công cụ..."
+brew install cmake
 
 # Thêm target riscv32i-unknown-none-elf cho Rust
 echo "Thêm target riscv32i-unknown-none-elf cho Rust..."
@@ -25,4 +29,16 @@ rustup target add riscv32i-unknown-none-elf
 echo "Cài đặt Nexus CLI..."
 curl https://cli.nexus.xyz/ | sh
 
-echo "Hoàn tất cài đặt. Chạy 'nexus-network start' để bắt đầu."
+# Tạo file script khởi động node mỗi khi bật máy
+echo "Tạo file script để tự động chạy node..."
+cat <<EOF > $HOME/start_nexus.sh
+#!/bin/bash
+~/.nexus/network-api/clients/cli/target/release/nexus-network start
+EOF
+
+chmod +x $HOME/start_nexus.sh
+
+# Thêm vào crontab để chạy khi khởi động máy
+(crontab -l 2>/dev/null; echo "@reboot $HOME/start_nexus.sh") | crontab -
+
+echo "Hoàn tất cài đặt! Node sẽ tự động chạy khi khởi động lại máy."
