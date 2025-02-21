@@ -1,21 +1,3 @@
-#!/bin/bash
-
-# Tạo script tự động chạy node khi khởi động
-cat <<EOF | sudo tee /etc/systemd/system/nexus-node.service
-[Unit]
-Description=Nexus Node Auto Start
-After=network.target
-
-[Service]
-User=$USER
-ExecStart=$HOME/.nexus/network-api/clients/cli/target/release/nexus-network start
-Restart=always
-
-[Install]
-WantedBy=multi-user.target
-EOF
-
-# Kích hoạt service tự động chạy node khi khởi động
-sudo systemctl daemon-reload
-sudo systemctl enable nexus-node.service
-sudo systemctl start nexus-node.service
+echo '#!/bin/bash' > ~/start_nexus.sh
+echo '~/.nexus/network-api/clients/cli/target/release/nexus-network' >> ~/start_nexus.sh
+chmod +x ~/start_nexus.sh
