@@ -1,59 +1,28 @@
 #!/bin/bash
 
-
-
-# Cài đặt các gói cần thiết
-echo "Cài đặt build-essential, pkg-config, libssl-dev, git-all, autoconf, automake, libtool..."
-sudo apt install -y build-essential pkg-config libssl-dev git-all autoconf automake libtool curl make g++ unzip
-
-sudo apt remove -y protobuf-compiler
-sudo apt install -y autoconf automake libtool curl make g++ unzip
-
-# Clone repo Protobuf
-git clone --depth=1 --branch=v21.12 https://github.com/protocolbuffers/protobuf.git
-cd protobuf
-
-# Biên dịch và cài đặt Protobuf
-git submodule update --init --recursive
-./autogen.sh
-./configure
-make -j$(nproc)
-sudo make install
-sudo ldconfig
-
-# Kiểm tra lại phiên bản
-protoc --version
-
-# Cài đặt Protobuf từ source
-echo "Cài đặt Protobuf từ source..."
-sudo apt remove -y protobuf-compiler
-git clone --depth=1 --branch=v21.12 https://github.com/protocolbuffers/protobuf.git
-cd protobuf
-git submodule update --init --recursive
-./autogen.sh
-./configure
-make -j$(nproc)
-sudo make install
-sudo ldconfig
-cd ..
-rm -rf protobuf
-protoc --version
+# Cài đặt Homebrew (chỉ áp dụng cho macOS)
+if [[ "$OSTYPE" == "darwin"* ]]; then
+  echo "Cài đặt Homebrew..."
+  /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+fi
 
 # Cài đặt Rust
 echo "Cài đặt Rust..."
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
 source $HOME/.cargo/env
 
-# Thêm target riscv32i cho Rust
+# Cài đặt cmake (nếu sử dụng Homebrew)
+if command -v brew &>/dev/null; then
+  echo "Cài đặt cmake bằng Homebrew..."
+  brew install cmake
+fi
+
+# Thêm target riscv32i-unknown-none-elf cho Rust
 echo "Thêm target riscv32i-unknown-none-elf cho Rust..."
 rustup target add riscv32i-unknown-none-elf
-
-echo '#!/bin/bash' > ~/start_nexus.sh
-echo '~/.nexus/network-api/clients/cli/target/release/nexus-network start' >> ~/start_nexus.sh
-chmod +x ~/start_nexus.sh
 
 # Cài đặt Nexus CLI
 echo "Cài đặt Nexus CLI..."
 curl https://cli.nexus.xyz/ | sh
 
-
+echo "Hoàn tất cài đặt. Chạy 'nexus-network start' để bắt đầu."
