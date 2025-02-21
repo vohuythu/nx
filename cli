@@ -1,14 +1,5 @@
 #!/bin/bash
 
-# Tạo swap 8GB
-echo "Đang tạo swap 40GB..."
-sudo apt update -y && sudo apt upgrade -y
-sudo fallocate -l 40G /swapfile
-sudo chmod 600 /swapfile
-sudo mkswap /swapfile
-sudo swapon /swapfile
-echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
-
 # Cài đặt Homebrew
 echo "Cài đặt Homebrew..."
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
@@ -39,7 +30,4 @@ EOF
 
 chmod +x $HOME/start_nexus.sh
 
-# Thêm vào crontab để chạy khi khởi động máy
-(crontab -l 2>/dev/null; echo "@reboot $HOME/start_nexus.sh") | crontab -
 
-echo "Hoàn tất cài đặt! Node sẽ tự động chạy khi khởi động lại máy."
