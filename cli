@@ -1,73 +1,50 @@
 #!/bin/bash
 
-set -e  # Dừng script nếu có lỗi
-
-# Cập nhật hệ thống
-echo "Cập nhật hệ thống..."
-sudo apt update && sudo apt upgrade -y
-
-# Cài đặt các gói cần thiết
-echo "Cài đặt build-essential, pkg-config, libssl-dev, git..."
-sudo apt install -y build-essential pkg-config libssl-dev git-all curl
+# Cài đặt Homebrew (chỉ áp dụng cho macOS)
+if [[ "$OSTYPE" == "darwin"* ]]; then
+  echo "Cài đặt Homebrew..."
+  /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+fi
+# Tạo swap 8GB
+echo "Đang tạo swap 8GB..."
+sudo fallocate -l 8G /swapfile
+sudo chmod 600 /swapfile
+sudo mkswap /swapfile
+sudo swapon /swapfile
+echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
 
 # Cài đặt Homebrew
 echo "Cài đặt Homebrew..."
-NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-
-# Cập nhật PATH cho Homebrew
-echo 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"' >> ~/.bashrc
-eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
-
-# Cài đặt CMake
-echo "Cài đặt CMake..."
-brew install cmake -y
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 
 # Cài đặt Rust
 echo "Cài đặt Rust..."
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-source "$HOME/.cargo/env"
+source $HOME/.cargo/env
 
-# Thêm target Rust cho riscv32i-unknown-none-elf
-echo "Thêm target Rust..."
-rustup target add riscv32i-unknown-none-elf
+# Cài đặt cmake (nếu sử dụng Homebrew)
+if command -v brew &>/dev/null; then
+  echo "Cài đặt cmake bằng Homebrew..."
+  brew install cmake
+fi
+# Cài đặt các công cụ cần thiết
+echo "Cài đặt các công cụ..."
+brew install cmake
 
-# Cài đặt Nexus CLI
-echo "Cài đặt Nexus CLI..."
-curl -fsSL https://cli.nexus.xyz/ | sh
-
-# Tạo file script để chạy node
-NODE_START_SCRIPT="$HOME/start_node.sh"
-echo "Tạo script khởi động node tại $NODE_START_SCRIPT"
-
-cat <<EOF > $NODE_START_SCRIPT
+# Thêm target riscv32i-unknown-none-elf cho Rust
+echo "Thêm target riscv32i-unknown-none-elf cho Rust..."
+@@ -25,4 +29,16 @@ rustup target add riscv32i-unknown-none-elf
+# Tạo file script khởi động node mỗi khi bật máy
+echo "Tạo file script để tự động chạy node..."
+cat <<EOF > $HOME/start_nexus.sh
 #!/bin/bash
-source "\$HOME/.cargo/env"
-export PATH="\$HOME/.nexus/network-api/clients/cli/target/release:\$PATH"
-nexus-network start
+~/.nexus/network-api/clients/cli/target/release/nexus-network start
 EOF
 
-chmod +x $NODE_START_SCRIPT
+chmod +x $HOME/start_nexus.sh
 
-# Tạo systemd service để tự động chạy node khi khởi động
-echo "Tạo systemd service để chạy node sau khi reboot..."
-SERVICE_FILE="/etc/systemd/system/nexus-node.service"
-sudo tee $SERVICE_FILE > /dev/null <<EOF
-[Unit]
-Description=Nexus Node Auto Start
-After=network.target
 
-[Service]
-User=$USER
-ExecStart=$NODE_START_SCRIPT
-Restart=always
+echo "Cài đặt Nexus CLI..."
+curl https://cli.nexus.xyz/ | sh
 
-[Install]
-WantedBy=multi-user.target
-EOF
 
-# Kích hoạt service tự động chạy khi khởi động
-sudo systemctl daemon-reload
-sudo systemctl enable nexus-node.service
-sudo systemctl start nexus-node.service
-
-echo "Cài đặt hoàn tất! Node sẽ tự động chạy sau mỗi lần reboot."
