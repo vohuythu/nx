@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # Tạo swap 8GB
-echo "Đang tạo swap 8GB..."
-sudo fallocate -l 8G /swapfile
+echo "Đang tạo swap 40GB..."
+sudo fallocate -l 40G /swapfile
 sudo chmod 600 /swapfile
 sudo mkswap /swapfile
 sudo swapon /swapfile
