@@ -1,0 +1,25 @@
+#!/bin/bash
+
+# Kiểm tra xem Cargo đã được cài đặt chưa
+if ! command -v cargo &> /dev/null
+then
+    echo "Cargo chưa được cài đặt. Đang tiến hành cài đặt Rust và Cargo..."
+    
+    # Cài đặt Rust và Cargo
+    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+    
+    # Thêm Cargo vào biến môi trường
+    source $HOME/.cargo/env
+    echo 'export PATH="$HOME/.cargo/bin:$PATH"' >> ~/.bashrc
+    source ~/.bashrc
+else
+    echo "Cargo đã được cài đặt: $(cargo --version)"
+fi
+
+# Kiểm tra lại sau khi cài đặt
+if command -v cargo &> /dev/null
+then
+    echo "Cargo đã được cài đặt thành công."
+else
+    echo "Có lỗi xảy ra. Hãy thử khởi động lại terminal hoặc kiểm tra lại quá trình cài đặt."
+fi
