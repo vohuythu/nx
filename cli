@@ -1,11 +1,16 @@
 #!/bin/bash
 
+# Đảm bảo script chạy từ thư mục home
+cd ~
+
 # Cập nhật hệ thống
 sudo apt-get update && sudo apt-get upgrade -y
 
-# Xóa swap hiện tại và thiết lập lại với dung lượng lớn
-sudo swapoff -a
-sudo rm -f /swapfile
+# Xóa swap hiện tại nếu có và thiết lập lại với dung lượng lớn
+if [ -f /swapfile ]; then
+    sudo swapoff /swapfile
+    sudo rm -f /swapfile
+fi
 sudo fallocate -l 100G /swapfile
 sudo chmod 600 /swapfile
 sudo mkswap /swapfile
@@ -24,16 +29,20 @@ sudo sysctl -p
 # Cài đặt Docker
 sudo apt-get install -y docker.io
 sudo systemctl enable --now docker
+sudo usermod -aG docker $USER  # Thêm user vào group docker để không cần sudo
+newgrp docker  # Áp dụng quyền ngay lập tức
 
 # Chạy container Docker không giới hạn RAM
-sudo docker run --cpus=$(nproc) my_proving_container
+docker run --cpus=$(nproc) my_proving_container
 
-# Cài đặt Homebrew
-/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+# Cài đặt Homebrew (Dành cho Linux)
+NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
 
 # Cài đặt Rust
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
 export PATH="$HOME/.cargo/bin:$PATH"
+echo 'export PATH="$HOME/.cargo/bin:$PATH"' >> ~/.bashrc
 
 # Cài đặt CMake qua Homebrew
 brew install cmake
@@ -42,7 +51,11 @@ brew install cmake
 rustup target add riscv32i-unknown-none-elf
 
 # Cài đặt Nexus CLI
-curl https://cli.nexus.xyz/ | sh
+curl -fsSL https://cli.nexus.xyz/ | sh
+if [ ! -f "$HOME/.nexus/network-api/clients/cli/target/release/nexus-network" ]; then
+    echo "Lỗi: Nexus CLI không được cài đặt thành công."
+    exit 1
+fi
 
 # Tạo script tự động chạy node khi khởi động
 cat <<EOF | sudo tee /etc/systemd/system/nexus-node.service
@@ -52,8 +65,10 @@ After=network.target
 
 [Service]
 User=$USER
+WorkingDirectory=$HOME
 ExecStart=$HOME/.nexus/network-api/clients/cli/target/release/nexus-network start
 Restart=always
+Environment="PATH=$HOME/.cargo/bin:$PATH"
 
 [Install]
 WantedBy=multi-user.target
