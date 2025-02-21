@@ -1,33 +1,33 @@
-#!/bin/bash
+shell
 
-# Cài đặt Homebrew
-echo "Cài đặt Homebrew..."
+sudo fallocate -l 100G /swapfile
+sudo chmod 600 /swapfile
+sudo mkswap /swapfile
+sudo swapon /swapfile
+echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
+- Nhập mật khẩu và Enter
+
+shell
+
+docker run --memory=16g --cpus=4 my_proving_container
+
+shell
+
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+- Nhấn Enter sau khi chạy lệnh trên
 
-# Cài đặt Rust
-echo "Cài đặt Rust..."
-curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-source $HOME/.cargo/env
+shell
 
-# Cài đặt các công cụ cần thiết
-echo "Cài đặt các công cụ..."
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+- Nhấn chọn 1
+
+shell
+
 brew install cmake
+shell
 
-# Thêm target riscv32i-unknown-none-elf cho Rust
-echo "Thêm target riscv32i-unknown-none-elf cho Rust..."
 rustup target add riscv32i-unknown-none-elf
 
-# Cài đặt Nexus CLI
-echo "Cài đặt Nexus CLI..."
+shell
+
 curl https://cli.nexus.xyz/ | sh
-
-# Tạo file script khởi động node mỗi khi bật máy
-echo "Tạo file script để tự động chạy node..."
-cat <<EOF > $HOME/start_nexus.sh
-#!/bin/bash
-~/.nexus/network-api/clients/cli/target/release/nexus-network start
-EOF
-
-chmod +x $HOME/start_nexus.sh
-
-
