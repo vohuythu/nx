@@ -1,64 +1,49 @@
 #!/bin/bash
 
-# Cập nhật hệ thống
+# Cập nhật và nâng cấp hệ thống
+echo "Cập nhật và nâng cấp hệ thống..."
 sudo apt update && sudo apt upgrade -y
 
 # Cài đặt các gói cần thiết
-sudo apt install -y build-essential pkg-config libssl-dev git-all
+echo "Cài đặt build-essential, pkg-config, libssl-dev, git-all, autoconf, automake, libtool..."
+sudo apt install -y build-essential pkg-config libssl-dev git-all autoconf automake libtool curl make g++ unzip
 
+# Cài đặt Protobuf từ source (giữ nguyên như file cũ)
+echo "Cài đặt Protobuf từ source..."
 sudo apt remove -y protobuf-compiler
-sudo apt install -y autoconf automake libtool curl make g++ unzip
-
-# Clone repo Protobuf
 git clone --depth=1 --branch=v21.12 https://github.com/protocolbuffers/protobuf.git
 cd protobuf
-
-# Biên dịch và cài đặt Protobuf
 git submodule update --init --recursive
 ./autogen.sh
 ./configure
 make -j$(nproc)
 sudo make install
 sudo ldconfig
-
-# Kiểm tra lại phiên bản
+cd ..
+rm -rf protobuf
 protoc --version
 
-# Cài đặt Homebrew
-/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-
 # Cài đặt Rust
+echo "Cài đặt Rust..."
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-export PATH="$HOME/.cargo/bin:$PATH"
+source $HOME/.cargo/env
 
-# Cài đặt CMake qua Homebrew
-brew install cmake
-
-# Thêm target cho Rust
+# Thêm target riscv32i cho Rust
+echo "Thêm target riscv32i-unknown-none-elf cho Rust..."
 rustup target add riscv32i-unknown-none-elf
 
 # Cài đặt Nexus CLI
+echo "Cài đặt Nexus CLI..."
 curl https://cli.nexus.xyz/ | sh
 
-# Tạo script tự động chạy node khi khởi động
-cat <<EOF | sudo tee /etc/systemd/system/nexus-node.service
-[Unit]
-Description=Nexus Node Auto Start
-After=network.target
+# Tạo script start_nexus.sh để bật node sau khi khởi động lại
+echo "Tạo script start_nexus.sh để chạy node..."
+echo '#!/bin/bash' > ~/start_nexus.sh
+echo 'echo "Đang khởi động Nexus Node..."' >> ~/start_nexus.sh
+echo '~/.nexus/network-api/clients/cli/target/release/nexus-network start' >> ~/start_nexus.sh
+chmod +x ~/start_nexus.sh
 
-[Service]
-User=$USER
-ExecStart=$HOME/.nexus/network-api/clients/cli/target/release/nexus-network start
-Restart=always
-
-[Install]
-WantedBy=multi-user.target
-EOF
-
-# Kích hoạt service tự động chạy node khi khởi động
-sudo systemctl daemon-reload
-sudo systemctl enable nexus-node.service
-sudo systemctl start nexus-node.service
-
-# Thông báo hoàn thành
+# Hướng dẫn người dùng
 echo "Cài đặt hoàn tất!"
+echo "Để chạy node, hãy dùng lệnh: ~/start_nexus.sh"
+echo "Để liên kết tài khoản Nexus, truy cập https://app.nexus.xyz/ và làm theo hướng dẫn."
