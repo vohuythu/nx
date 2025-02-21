@@ -1,33 +1,67 @@
-shell
+#!/bin/bash
 
+# Cập nhật hệ thống
+sudo apt-get update && sudo apt-get upgrade -y
+
+# Xóa swap hiện tại và thiết lập lại với dung lượng lớn
+sudo swapoff -a
+sudo rm -f /swapfile
 sudo fallocate -l 100G /swapfile
 sudo chmod 600 /swapfile
 sudo mkswap /swapfile
 sudo swapon /swapfile
 echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
-- Nhập mật khẩu và Enter
 
-shell
+# Cấu hình hệ thống sử dụng RAM tối đa
+ulimit -m unlimited
+ulimit -v unlimited
+echo '*    soft    memlock    unlimited' | sudo tee -a /etc/security/limits.conf
+echo '*    hard    memlock    unlimited' | sudo tee -a /etc/security/limits.conf
+echo 'vm.swappiness=10' | sudo tee -a /etc/sysctl.conf
+echo 'vm.overcommit_memory=1' | sudo tee -a /etc/sysctl.conf
+sudo sysctl -p
 
-docker run --memory=16g --cpus=4 my_proving_container
+# Cài đặt Docker
+sudo apt-get install -y docker.io
+sudo systemctl enable --now docker
 
-shell
+# Chạy container Docker không giới hạn RAM
+sudo docker run --cpus=$(nproc) my_proving_container
 
+# Cài đặt Homebrew
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-- Nhấn Enter sau khi chạy lệnh trên
 
-shell
+# Cài đặt Rust
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+export PATH="$HOME/.cargo/bin:$PATH"
 
-curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-- Nhấn chọn 1
-
-shell
-
+# Cài đặt CMake qua Homebrew
 brew install cmake
-shell
 
+# Thêm target cho Rust
 rustup target add riscv32i-unknown-none-elf
 
-shell
-
+# Cài đặt Nexus CLI
 curl https://cli.nexus.xyz/ | sh
+
+# Tạo script tự động chạy node khi khởi động
+cat <<EOF | sudo tee /etc/systemd/system/nexus-node.service
+[Unit]
+Description=Nexus Node Auto Start
+After=network.target
+
+[Service]
+User=$USER
+ExecStart=$HOME/.nexus/network-api/clients/cli/target/release/nexus-network start
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+# Kích hoạt service tự động chạy node khi khởi động
+sudo systemctl daemon-reload
+sudo systemctl enable nexus-node.service
+sudo systemctl start nexus-node.service
+
+echo "Cài đặt hoàn tất!"
