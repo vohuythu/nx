@@ -2,6 +2,7 @@
 
 # Tạo swap 8GB
 echo "Đang tạo swap 40GB..."
+sudo apt update -y && sudo apt upgrade -y
 sudo fallocate -l 40G /swapfile
 sudo chmod 600 /swapfile
 sudo mkswap /swapfile
